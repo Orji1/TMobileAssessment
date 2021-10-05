@@ -1,12 +1,10 @@
 package com.example.tmobileassessment.view.adapter
 
 import android.view.LayoutInflater
-import android.view.View
 import android.view.ViewGroup
-import android.widget.ImageView
-import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.example.tmobileassessment.R
+import com.example.tmobileassessment.databinding.ItemLayoutBinding
 import com.example.tmobileassessment.model.Image
 import com.example.tmobileassessment.model.ResponseData
 import com.example.tmobileassessment.model.Title
@@ -14,27 +12,17 @@ import com.squareup.picasso.Picasso
 
 class TMobileAdapter(
     private var dataSet: ResponseData?
-) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+) : RecyclerView.Adapter<TMobileAdapter.TMobileViewHolder>() {
 
-    class TMobileViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        private var textView: TextView = itemView.findViewById(R.id.tv_title)
-        private var imageView: ImageView = itemView.findViewById(R.id.iv_image)
+    class TMobileViewHolder(private val itemBinding: ItemLayoutBinding) :
+        RecyclerView.ViewHolder(itemBinding.root) {
 
         fun onBind(
             image: Image, title: Title
         ) {
-            Picasso.get().load(image.url).into(this.imageView)
-            textView.text = title.value
-        }
-    }
-
-    class TMobileViewHolderWithoutImage(itemView: View) :
-        RecyclerView.ViewHolder(itemView) {
-        private var textView: TextView = itemView.findViewById(R.id.tv_title)
-        fun onBind(
-            title: Title
-        ) {
-            textView.text = title.value
+            Picasso.get().load(image.url).placeholder(R.drawable.placeholder)
+                .into(itemBinding.ivImage)
+            itemBinding.tvTitle.text = title.value
         }
     }
 
@@ -43,45 +31,28 @@ class TMobileAdapter(
         notifyDataSetChanged()
     }
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
-        return if (viewType == 1) {
-            val view = LayoutInflater.from(parent.context).inflate(
-                R.layout.item_layout_no_image,
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): TMobileViewHolder {
+        return TMobileViewHolder(
+            ItemLayoutBinding.inflate(
+                LayoutInflater.from(parent.context),
                 parent,
                 false
             )
-            TMobileViewHolderWithoutImage(view)
-        } else {
-            val view = LayoutInflater.from(parent.context).inflate(
-                R.layout.item_layout,
-                parent,
-                false
-            )
-            return TMobileViewHolder(view)
-        }
+        )
     }
 
-    override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
+    override fun onBindViewHolder(holder: TMobileViewHolder, position: Int) {
         val card = dataSet?.page?.cards?.get(position)?.card
         val title = card?.title
-        if (getItemViewType(position) == 2) {
-            card?.image.let {
-                if (it != null) {
-                    if (title != null) {
-                        (holder as TMobileViewHolder).onBind(it, title)
-                    }
-                }
+
+        card?.image?.let {
+            if (title != null) {
+                holder.onBind(it, title)
             }
-        } else
-            title?.let { (holder as TMobileViewHolderWithoutImage).onBind(it) }
+        }
     }
 
     override fun getItemCount(): Int {
         return dataSet?.page?.cards?.size ?: 0
-    }
-
-    override fun getItemViewType(position: Int): Int {
-        val image = dataSet?.page?.cards?.get(position)?.card?.image
-        return if (image?.url.isNullOrEmpty()) 1 else 2
     }
 }
